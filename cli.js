@@ -33,8 +33,8 @@ if (argv._.indexOf('in') !== -1){
   var output = new midi.output();
   output.openVirtualPort('jetmidi-out');
   socket.on('message', function(msg){
-    console.log('message', msg.message);
-    output.sendMessage(msg);
+    console.log('message', msg);
+    output.sendMessage(msg.message);
   });
 }
 
