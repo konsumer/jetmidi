@@ -9,7 +9,7 @@ var argv = yargs
   .default('socket', 'https://jetmidi.herokuapp.com')
   .alias('h', 'help')
   .alias('s', 'socket')
-  .usage('Usage: $0 in/out/list [--name STRING]')
+  .usage('Usage: $0 in/out [--name STRING]')
   .help('help')
   .describe('socket', 'The URL of your socket')
   .example('$0 in', 'start a local virtual device with an input port for your keyboard')
