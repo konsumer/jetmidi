@@ -25,13 +25,13 @@ if (argv._.indexOf('in') !== -1 || argv._.indexOf('out') !== -1){
 
 if (argv._.indexOf('in') !== -1){
   var input = new midi.input();
-  input.openVirtualPort('jetmidi');
+  input.openVirtualPort('jetmidi-in');
   input.on('message', function(delta, message){
     socket.emit('message', {delta:delta, message:message});
   });
 }else if (argv._.indexOf('out') !== -1){
   var output = new midi.output();
-  output.openVirtualPort('jetmidi');
+  output.openVirtualPort('jetmidi-out');
   socket.on('message', function(msg){
     console.log('message', msg);
     output.sendMessage(msg);
