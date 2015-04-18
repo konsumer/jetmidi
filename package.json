@@ -7,7 +7,7 @@
     "yargs": "^3.7.2"
   },
   "bin": {
-    "jetmidi": "./cli.js"
+    "jetmidi": "jetmidi"
   },
   "bugs":{ "url" : "https://github.com/konsumer/jetmidi/issues"},
   "repository" :{
