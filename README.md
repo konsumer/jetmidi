@@ -7,4 +7,8 @@ Please be nice and don't crash other people's pipes (until I get some auth in th
 
 # cli
 
-I have only completed the CLI version, but this should get you started. I have a GUI planned.  After installing with `npm install -g jetmidi`, you can run `jetmidi` to get some help.
+After installing with `npm install -g jetmidi`, you can run `jetmidi` to get some help.
+
+# gui
+
+You can get a working GUI version from [releases](https://github.com/konsumer/jetmidi/releases). This just uses nodewebkit and listens for MIDI.
