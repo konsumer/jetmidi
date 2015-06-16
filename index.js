@@ -13,6 +13,10 @@ var argv = yargs
   .help('help')
   .alias('h', 'help')
 
+  .boolean('verbose')
+  .describe('verbose', 'Verbose debugging info')
+  .alias('v', 'verbose')
+
   .nargs('ip', 1)
   .describe('ip', 'The destination IP address to connect a socket to')
   .alias('i', 'ip')
@@ -58,15 +62,24 @@ function sendMSG(msg){
 
 server.on("message", function (msg, rinfo) {
   if (listening) {
-    output.sendMessage(msg);
+    if (argv.verbose)
+      console.log('server', msg);
+    var out = [];
+    for (i in msg){
+      out.push(msg[i]);
+    }
+    output.sendMessage(out);
   }else if (msg.toString() == ACK_MAGICK.toString()) {
     listening = true;
   }
 });
 
-input.on('message', function(delta, message){
-  console.log('message', message);
-  sendMSG(new Buffer(message));
+input.on('message', function(delta, msg){
+  if (argv.verbose)
+    console.log('input', msg);
+  if (Array.isArray(msg))
+    msg = new Buffer(msg);
+  sendMSG(msg);
 });
 
 server.bind(argv.port);
