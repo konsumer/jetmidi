@@ -1,39 +1,80 @@
 #!/usr/bin/env node
+/*
+Firewall traversing 2-way midi
+Ideas from https://gist.github.com/metal3d/1135356
+*/
+
+var dgram = require('dgram');
+
 var yargs = require('yargs');
 var midi = require('midi');
 
 var argv = yargs
-  .command('in', 'Create virtual device you can plug your keyboard into')
-  .command('out', 'Create a virtual device you can plug your DAW into')
-  .nargs('socket', 1)
-  .default('socket', 'https://jetmidi.herokuapp.com')
-  .alias('h', 'help')
-  .alias('s', 'socket')
-  .usage('Usage: $0 in/out [--name STRING]')
   .help('help')
-  .describe('socket', 'The URL of your socket')
-  .example('$0 in', 'start a local virtual device with an input port for your keyboard')
-  .example('$0 out', 'start a local virtual device with an output port for your DAW')
+  .alias('h', 'help')
+
+  .nargs('ip', 1)
+  .describe('ip', 'The destination IP address to connect a socket to')
+  .alias('i', 'ip')
+  .require('ip')
+
+  .nargs('port', 1)
+  .describe('port', 'The host port for the socket')
+  .default('port', 5556)
+  .alias('p', 'port')
+
+  .nargs('destination', 1)
+  .describe('destination', 'The destination port for the socket')
+  .default('destination', 5557)
+  .alias('d', 'destination')
+
+  .usage('Usage: $0 --ip 192.168.0.5 [--port 3000] [--destination 3001]')
+  .example('$0 -i 192.168.0.5', 'connect a socket to 192.168.0.5 on port 5556/5557')
+  .example('$0 -i 192.168.0.4 -p 5557 -d 5556', 'connect a socket to 192.168.0.4 on port 5557/5556')
+
   .argv;
 
-if (argv._.indexOf('in') !== -1 || argv._.indexOf('out') !== -1){
-  console.log('Creating socket to ' + argv.socket);
-  var socket = require('socket.io-client')(argv.socket);
-}else{
-  console.log(yargs.help());
+var server = dgram.createSocket('udp4');
+var input = new midi.input();
+input.openVirtualPort('JetMIDI in');
+var output = new midi.output();
+output.openVirtualPort('JetMIDI out');
+
+server.on("listening", function () {
+  var address = server.address();
+  console.log("server listening " + address.address + ":" + address.port);
+});
+
+var listening = false;
+var ACK_GARBAGE = new Buffer("node-transversal-garbage");
+var ACK_MAGICK = new Buffer("node-transversal-magick");
+
+function sendMSG(msg){
+  server.send(
+    msg, 0 , 
+    msg.length, 
+    argv.destination, argv.ip);
 }
 
-if (argv._.indexOf('in') !== -1){
-  var input = new midi.input();
-  input.openVirtualPort('jetmidi-in');
-  input.on('message', function(delta, message){
-    socket.emit('message', {delta:delta, message:message});
-  });
-}else if (argv._.indexOf('out') !== -1){
-  var output = new midi.output();
-  output.openVirtualPort('jetmidi-out');
-  socket.on('message', function(msg){
-    console.log('message', msg);
-    output.sendMessage(msg.message);
-  });
+server.on("message", function (msg, rinfo) {
+  if (listening) {
+    output.sendMessage(msg);
+  }else if (msg.toString() == ACK_MAGICK.toString()) {
+    listening = true;
+  }
+});
+
+input.on('message', function(delta, message){
+  console.log('message', message);
+  sendMSG(new Buffer(message));
+});
+
+server.bind(argv.port);
+
+for (var i=0; i<10; i++) {
+  setTimeout(function (){sendMSG( ACK_GARBAGE); }, 1000*i); 
 }
+setTimeout(function (){sendMSG( ACK_MAGICK); } , 1000*(i++));
+setTimeout(function (){
+  console.log("Ready");
+},1000*(i++));
